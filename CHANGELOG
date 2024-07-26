@@ -1,3 +1,12 @@
+1.56.2 (Aug 26, 2024)
+  - Added DSN (Delivery Status Notification) support
+    by Goran Katavić <gkatavic@protonmail.com>
+    Introduced the -dsn option to enable Delivery Status Notification (DSN).
+	Users can now request notifications for message delivery with options for:
+	Success (S), Failure (F), and Delay (D). The default DSN options are 'sfd'.
+    Added the -dsnid option to specify an envelope ID for DSN requests,
+	with a default setting of a random ID.
+
 1.56.1 (Aug 16, 2016)
   - Added support for TLS 1.2 by Artur Pędziwilk
     https://gist.github.com/wilkart/7eb6c8ec7eb6b0cb18a8439bc40da6f8
