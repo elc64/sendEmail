@@ -1,0 +1,17 @@
+@@ -37,6 +37,7 @@
+ ##############################################################################
+ use strict;
+ use IO::Socket;
++use Win32::Console::ANSI;
+
+
+ ########################
+@@ -122,7 +123,7 @@
+
+ ## Don't use shell escape codes on Windows systems
+ if ($^O =~ /win/i) {
+-    ${colorRed} = ${colorGreen} = ${colorCyan} = ${colorWhite} = ${colorNormal} = ${colorBold} = ${colorNoBold} = "";
++#    ${colorRed} = ${colorGreen} = ${colorCyan} = ${colorWhite} = ${colorNormal} = ${colorBold} = ${colorNoBold} = "";
+ }
+
+ ## Load IO::Socket::SSL if it's available
