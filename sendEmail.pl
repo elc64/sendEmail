@@ -3,6 +3,8 @@
 ## sendEmail
 ## Written by: Brandon Zehm <caspian@dotconf.net>
 ##
+## TLS 1.2 patch by Artur Pędziwilk (https://gist.github.com/wilkart/7eb6c8ec7eb6b0cb18a8439bc40da6f8)
+##
 ## License:
 ##  sendEmail (hereafter referred to as "program") is free software;
 ##  you can redistribute it and/or modify it under the terms of the GNU General
@@ -46,7 +48,7 @@ use IO::Socket;
 my %conf = (
     ## General
     "programName"          => $0,                                  ## The name of this program
-    "version"              => '1.56',                              ## The version of this program
+    "version"              => '1.56.1-tls1.2',                     ## The version of this program
     "authorName"           => 'Brandon Zehm',                      ## Author's Name
     "authorEmail"          => 'caspian@dotconf.net',               ## Author's Email Address
     "timezone"             => '+0000',                             ## We always use +0000 for the time zone
@@ -64,8 +66,8 @@ my %conf = (
     "port"                 => 25,                                  ## Default port
     "bindaddr"             => '',                                  ## Default local bind address
     "alarm"                => '',                                  ## Default timeout for connects and reads, this gets set from $opt{'timeout'}
-    "tls_client"           => 0,                                   ## If TLS is supported by the client (us)
-    "tls_server"           => 0,                                   ## If TLS is supported by the remote SMTP server
+    "tls_client"           => 1,                                   ## If TLS is supported by the client (us)
+    "tls_server"           => 1,                                   ## If TLS is supported by the remote SMTP server
     
     ## Email
     "delimiter"            => "----MIME delimiter for sendEmail-"  ## MIME Delimiter
@@ -1903,7 +1905,7 @@ else {
     if ($conf{'tls_server'} == 1 and $conf{'tls_client'} == 1 and $opt{'tls'} =~ /^(yes|auto)$/) {
         printmsg("DEBUG => Starting TLS", 2);
         if (SMTPchat('STARTTLS')) { quit($conf{'error'}, 1); }
-        if (! IO::Socket::SSL->start_SSL($SERVER, SSL_version => 'SSLv3 TLSv1')) {
+        if (! IO::Socket::SSL->start_SSL($SERVER, SSL_version => 'TLSv1_2', SSL_verify_mode => 0 )) {
             quit("ERROR => TLS setup failed: " . IO::Socket::SSL::errstr(), 1);
         }
         printmsg("DEBUG => TLS: Using cipher: ". $SERVER->get_cipher(), 3);
