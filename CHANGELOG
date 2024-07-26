@@ -1,3 +1,7 @@
+1.56.1 (Aug 16, 2016)
+  - Added support for TLS 1.2 by Artur Pędziwilk
+    https://gist.github.com/wilkart/7eb6c8ec7eb6b0cb18a8439bc40da6f8
+
 1.56 (Sep 8, 2009)
   - Fixed authentication errors caused by invalid base64 encoding.
     Thanks for dozens of people who reported this and even submitted
