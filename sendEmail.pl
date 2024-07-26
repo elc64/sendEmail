@@ -1,9 +1,11 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 ##############################################################################
 ## sendEmail
 ## Written by: Brandon Zehm <caspian@dotconf.net>
 ##
 ## TLS 1.2 patch by Artur Pędziwilk (https://gist.github.com/wilkart/7eb6c8ec7eb6b0cb18a8439bc40da6f8)
+##
+## Support for Delivery Status Notification (DSN) by Goran Katavić <gkatavic@protonmail.com>
 ##
 ## License:
 ##  sendEmail (hereafter referred to as "program") is free software;
@@ -48,7 +50,7 @@ use IO::Socket;
 my %conf = (
     ## General
     "programName"          => $0,                                  ## The name of this program
-    "version"              => '1.56.1-tls1.2',                     ## The version of this program
+    "version"              => '1.56.2-tls1.2-dsn',                 ## The version of this program
     "authorName"           => 'Brandon Zehm',                      ## Author's Name
     "authorEmail"          => 'caspian@dotconf.net',               ## Author's Email Address
     "timezone"             => '+0000',                             ## We always use +0000 for the time zone
@@ -73,6 +75,8 @@ my %conf = (
     "delimiter"            => "----MIME delimiter for sendEmail-"  ## MIME Delimiter
                               . rand(1000000),                     ## Add some randomness to the delimiter
     "Message-ID"           => rand(1000000) . "-sendEmail",        ## Message-ID for email header
+    "dsnopts"              => '',                                  ## DSN Options
+    "dsnid"                => '',                                  ## DSN ID
     
 );
 
@@ -376,6 +380,67 @@ sub processCommandLine {
             else {
                 printmsg("WARNING => The argument after -xp was not valid password!", 0);
                 $counter--;
+            }
+        }
+
+        elsif ($ARGS[$counter] =~ /^-dsn$/) {                ## DSN options
+            $counter++;
+            # Default DSN NOTIFY options if OPTIONS is not specified or s/f/d is not found in OPTIONS parameter
+            my $defaultdsnoptions = 'NOTIFY=SUCCESS,FAILURE,DELAY';
+            #
+            if ($ARGS[$counter] && $ARGS[$counter] !~ /^-/) {
+               $opt{'dsn'} = $ARGS[$counter];
+               my $dsnsuccess = 0;
+               my $dsnfailure = 0;
+               my $dsndelay = 0;
+               if ($opt{'dsn'} =~ /[sS]/) {
+                   $dsnsuccess = 1;
+               }
+               if ($opt{'dsn'} =~ /[fF]/) {
+                   $dsnfailure = 1;
+               }
+               if ($opt{'dsn'} =~ /[dD]/) {
+                   $dsndelay = 1;
+               }
+               if ($dsnsuccess == 0 && $dsnfailure == 0 && $dsndelay == 0) {
+                   $conf{'dsnopts'} = $defaultdsnoptions;
+               }
+               else {
+                   if ($dsnsuccess == 1) {
+                       $conf{'dsnopts'} = 'NOTIFY=SUCCESS';
+                       if ($dsnfailure == 1) {
+                           $conf{'dsnopts'} .= ',FAILURE'
+                       }
+                       if ($dsndelay == 1) {
+                           $conf{'dsnopts'} .= ',DELAY'
+                       }
+                   }
+                   elsif ($dsnfailure == 1) {
+                       $conf{'dsnopts'} = 'NOTIFY=FAILURE';
+                       if ($dsndelay == 1) {
+                           $conf{'dsnopts'} .= ',DELAY'
+                       }
+                   }
+                   else {
+                       $conf{'dsnopts'} = 'NOTIFY=DELAY';
+                   }
+               }
+            }
+            else {
+               $counter--;
+               $conf{'dsnopts'} = $defaultdsnoptions;
+            }
+        }
+
+        elsif ($ARGS[$counter] =~ /^-dsnid$/) {              ## DSN ID
+            $counter++;
+            if ($ARGS[$counter] && $ARGS[$counter] !~ /^-/) {
+               $opt{'dsnid'} = $ARGS[$counter];
+               $conf{'dsnid'} =  $opt{'dsnid'};
+            }
+            else {
+               $counter--;
+               $conf{'dsnid'} =  generate_random_string(16);
             }
         }
         
@@ -1260,6 +1325,31 @@ sub quit {
 }
 
 
+###############################################################################################
+##  Function:    generate_random_string (int $leghth)
+##
+##  Description: Generates a random string of a specified length.
+##  
+##  Example:     $myvar =  generate_random_string(16);
+###############################################################################################
+sub generate_random_string {
+    my ($length) = @_;
+    
+    # Define the character set
+    my @chars = ('A'..'Z', 'a'..'z', '0'..'9');
+    my $charset = join('', @chars);
+    
+    # Generate the random string
+    my $random_string = '';
+    for (1..$length) {
+        my $random_index = int(rand(length($charset)));
+        $random_string .= substr($charset, $random_index, 1);
+    }
+    
+    return $random_string;
+}
+
+
 
 
 
@@ -1315,6 +1405,12 @@ Synopsis:  $conf{'programName'} -f ADDRESS [options]
         -o reply-to=ADDRESS          -o timeout=SECONDS
         -o username=USERNAME         -o password=PASSWORD
         -o tls=<auto|yes|no>         -o fqdn=FQDN
+
+  ${colorGreen}Extra:${colorNormal}
+    -dsn [OPTIONS]            enable Delivery Status Notification (DSN)
+                              DSN options: (S)uccess, (F)ailure, (D)elay
+                              default value for OPTIONS is 'sfd'
+    -dsnid [ID]               envelope ID for DSN requests, default is random
 
 
   ${colorGreen}Help:${colorNormal}
@@ -1982,13 +2078,30 @@ else {
 }
 
 ## MAIL FROM
-if (SMTPchat('MAIL FROM:<' .(returnAddressParts($from))[1]. '>')) { quit($conf{'error'}, 1); }
+my $appenddsnid = '';
+#
+# Append 'RET=HDRS' if -dsn was specified and append ENVELOPE ID if -dsnid was specified
+if ($conf{'dsnopts'} ne '') {
+    $appenddsnid = ' RET=HDRS';
+    if ($conf{'dsnid'} ne '') {
+      $appenddsnid .= ' ENVID=' . $conf{'dsnid'};
+    }
+}
+#
+if (SMTPchat('MAIL FROM:<' .(returnAddressParts($from))[1]. '>' . $appenddsnid)) { quit($conf{'error'}, 1); }
 
 ## RCPT TO
 my $oneRcptAccepted = 0;
 foreach my $rcpt (@to, @cc, @bcc) {
     my ($name, $address) = returnAddressParts($rcpt);
-    if (SMTPchat('RCPT TO:<' . $address . '>')) {
+    #
+    # Append DSN options if -dsn was specified
+    my $appenddsn = '';
+    if ($conf{'dsnopts'} ne '') {
+        $appenddsn = ' ' . $conf{'dsnopts'};
+    }
+    #
+    if (SMTPchat('RCPT TO:<' . $address . '>' . $appenddsn)) {
         printmsg("WARNING => The recipient <$address> was rejected by the mail server, error follows:", 0);
         $conf{'error'} =~ s/^ERROR/WARNING/o;
         printmsg($conf{'error'}, 0);
