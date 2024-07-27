@@ -1,5 +1,5 @@
-1.56.2 (Aug 26, 2024)
-  - Added DSN (Delivery Status Notification) support
+1.56.2 (Jul 26, 2024)
+  - Added support for Delivery Status Notification (DSN)
     by Goran Katavić <gkatavic@protonmail.com>
     Introduced the -dsn option to enable Delivery Status Notification (DSN).
 	Users can now request notifications for message delivery with options for:

@@ -1,6 +1,6 @@
 # sendEmail
 SendEmail is a lightweight, command line SMTP email client. If you have the need to send email from a command line, this free program is perfect: simple to use and feature rich. It was designed to be used in bash scripts, batch files, Perl programs and web sites, but is quite adaptable and will likely meet your requirements. SendEmail is written in Perl and is unique in that it requires NO MODULES. It has an intuitive and flexible set of command-line options, making it very easy to learn and use. SendEmail is licensed under the GNU GPL, either version 2 of the License or (at your option) any later version.
-[Supported Platforms: Linux, BSD, OS X, Windows 98, Windows NT, Windows 2000, &amp; Windows XP]
+[Supported Platforms: Linux, BSD, OS X, Windows XP and higher]
 
 sendEmail - Send email from a console near you!
 Written by: Brandon Zehm <caspian@dotconf.net>
@@ -15,16 +15,25 @@ SendEmail is a perl script/program, and only needs to be copied to a directory
 in your path to make it accessible.  Most likely the following steps will
 be sufficient:
 
-1) Extract the package
-    tar -zxvf sendEmail-v1.XX.tar.gz
+1) Unzip the package sendEmail-v1.XX.zip
 
-2) Copy the sendEmail.pl script (and it's symlink sendEmail) to /usr/local/bin
+2) Copy the sendEmail.pl script to /usr/local/bin
+```
     cp -a sendEmail-v1.XX/sendEmail.pl /usr/local/bin
+```
 
-3) Make sure its executable
+3) Make a symlink
+```
+    cd /usr/local/bin
+    ln -s sendEmail.pl sendEmail
+```
+
+4) Make sure it is executable
+```
     chmod +x /usr/local/bin/sendEmail.pl
+```
 
-4) Run it
+5) Run it
     `sendEmail.pl`
       or
     `/usr/local/bin/sendEmail.pl`
@@ -47,9 +56,10 @@ you may need to edit the first line of the script accordingly.
 Usage Overview
 ---------------
 
-sendEmail-1.56 by Brandon Zehm <caspian@dotconf.net>
+```
+sendEmail.exe-1.56 by Brandon Zehm <caspian@dotconf.net>
 
-Synopsis:  sendEmail -f ADDRESS [options]
+Synopsis:  sendEmail.exe -f ADDRESS [options]
 
   Required:
     -f ADDRESS                from (sender) email address
@@ -75,12 +85,19 @@ Synopsis:  sendEmail -f ADDRESS [options]
     -v                        verbosity, use multiple times for greater effect
     -q                        be quiet (i.e. no STDOUT output)
     -o NAME=VALUE             advanced options, for details try: --help misc
-        -o message-content-type=<auto|text|html|other>
+        -o message-content-type=<auto|text|html>
         -o message-file=FILE         -o message-format=raw
         -o message-header=HEADER     -o message-charset=CHARSET
         -o reply-to=ADDRESS          -o timeout=SECONDS
         -o username=USERNAME         -o password=PASSWORD
         -o tls=<auto|yes|no>         -o fqdn=FQDN
+
+  Extra:
+    -dsn [OPTIONS]            enable Delivery Status Notification (DSN)
+                              DSN options: (S)uccess, (F)ailure, (D)elay
+                              default value for OPTIONS is 'sfd'
+    -dsnid [ID]               envelope ID for DSN requests, default is random
+
 
   Help:
     --help                    the helpful overview you're reading now
@@ -89,7 +106,7 @@ Synopsis:  sendEmail -f ADDRESS [options]
     --help networking         explain -s, -b, etc
     --help output             explain logging and other output options
     --help misc               explain -o options, TLS, SMTP auth, and more
-
+```
 
 
 ---------------
@@ -99,10 +116,10 @@ Examples
 Send a simple email:
 
 ```
-    sendEmail -f me@gmail.com      \
+    sendEmail -f myaddress@isp.net \
             -t friend@yahoo.com    \
-            -s smtp.gmail.com:587  \
-            -xu me@gmail.com       \
+            -s relay.isp.net:587   \
+            -xu myaddress@isp.net  \
             -xp MY-PASSWORD        \
             -u "Test email"        \
             -m "Hi buddy, this is a test email."
@@ -182,11 +199,20 @@ Sending an html email:  (make sure your html file has <html> at the beginning)
 ------------
 Contributors
 ------------
+   
+  Goran Katavić (v1.56.2)
+   - Added support for Delivery Status Notification (DSN)
 
-Many thanks go to the people who have submitted ideas and patches.
-I know I've forgotten to mention everyone who's helped with sendEmail,
-but here is a small list.  Please let me know if you feel your name
-should be here!
+  Artur Pędziwilk (v1.56.1)
+   - TLS 1.2 patch
+
+  Starting from version v1.56.1 and higher, this is a fork of the application by Goran Katavić.
+
+  From Brandom Zehm, the creator of sendEmail:
+   - Many thanks go to the people who have submitted ideas and patches.
+     I know I've forgotten to mention everyone who's helped with sendEmail,
+     but here is a small list.  Please let me know if you feel your name
+     should be here!
 
   v1.56
    - Several people submitted fixes for the authentication bug.
